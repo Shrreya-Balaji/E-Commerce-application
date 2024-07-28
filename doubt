@@ -1,0 +1,163 @@
+<?php 
+session_start();
+
+if (isset($_SESSION['id']) && isset($_SESSION['user_name'])) {
+
+ ?>
+<!DOCTYPE html>
+<html>
+<head>
+	<title>HOME</title>
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+     <h1>Hello, <?php echo $_SESSION['name']; ?></h1>
+     <a href="logout.php">Logout</a>
+</body>
+</html>
+
+<?php 
+}else{
+     header("Location: index.php");
+     exit();
+}
+ ?>
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dress Shopping</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            position: relative;
+        }
+
+        #viewOrdersButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>MYNTRA SHOPPING MART</h1>
+
+    <!-- Add the "View Orders" button in the top-right corner -->
+    <button id="viewOrdersButton" onclick="viewOrders()">View Orders</button>
+
+    <div class="dress-collection">
+        <?php
+        include 'db_conn.php';
+
+        session_start();
+        if (!isset($_SESSION['id'])) {
+            echo "Not authenticated";
+            exit();
+        }
+        $user_id = $_SESSION['id'];
+
+        $sql = "SELECT * FROM dresses";
+        $result = $conn->query($sql);
+
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                echo "<div class='dress-item'>";
+                echo "<img src='data:image/jpeg;base64," . base64_encode($row['image']) . "' alt='" . $row['name'] . "'>";
+                echo "<p>" . $row['name'] . "</p>";
+                echo "<p>$" . $row['price'] . "</p>";
+                echo "<button onclick='addToCart(" . $row['dress_id'] . ", \"" . $row['name'] . "\", " . $row['price'] . ")'>Place order</button>";
+                echo "</div>";
+            }
+        } else {
+            echo "No dresses available.";
+        }
+
+        $conn->close();
+        ?>
+    </div>
+
+    <script>
+        function addToCart(dressId, dressName, dressPrice) {
+            alert('Your order has been placed: Dress ID ' + dressId);
+
+            <?php
+            // Insert the item into the orders table
+            echo "var dressId = ". $row['dress_id'] . ";";
+            echo "var dressName = '" . $row['name'] . "';";
+            echo "var dressPrice = " . $row['price'] . ";";
+            echo "var userId = $user_id;";
+            echo "var orderDate = new Date().toISOString().slice(0, 19).replace('T', ' ');";
+
+            $sql = "INSERT INTO orders (user_id, dress_id, dress_name, dress_price, order_date) 
+                    VALUES ($user_id, $dress_id, '$dress_name', $dress_price, NOW())";
+
+            if ($conn->query($sql) === TRUE) {
+                echo "console.log('Your order has been placed successfully');";
+            } else {
+                echo "console.error('Error: " . $sql . "<br>" . $conn->error . "');";
+            }
+            ?>
+        }
+
+        function viewOrders() {
+            window.location.href = "history.php";
+        }
+    </script>
+</body>
+</html>
+
+
+<?php
+include 'db_conn.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selectedItems'])) {
+    // Ensure selectedItems is an array
+    $selectedItems = $_POST['selectedItems'];
+    if (!is_array($selectedItems)) {
+        $selectedItems = array($selectedItems);
+    }
+
+    // Sanitize and validate the selected dress IDs
+    $validDressIDs = array();
+    foreach ($selectedItems as $dressID) {
+        $dressID = filter_var($dressID, FILTER_VALIDATE_INT);
+        if ($dressID !== false) {
+            $validDressIDs[] = $dressID;
+        }
+    }
+
+    if (!empty($validDressIDs)) {
+        // Remove selected items from the database
+        /*$dressIDList = implode(',', $validDressIDs);
+        $sql = "DELETE FROM dresses WHERE dress_id IN ($dressIDList)";
+        
+        if ($conn->query($sql) === TRUE) {
+            echo "Selected items have been removed successfully.";
+        } else {
+            echo "Error removing items: " . $conn->error;
+        }*/
+
+        // Assume $dressIDList is a comma-separated list of dress IDs you want to remove
+
+// Update availability of selected dresses
+$sqlUpdateDresses = "UPDATE dresses SET availability = FALSE WHERE dress_id IN ($dressIDList)";
+if ($conn->query($sqlUpdateDresses) === TRUE) {
+    echo "Selected items have been marked as unavailable.";
+} else {
+    echo "Error updating items: " . $conn->error;
+}
+
+    } else {
+        echo "Invalid dress IDs selected.";
+    }
+} else {
+    echo "Invalid request.";
+}
+
+$conn->close();
+?>

@@ -1,0 +1,36 @@
+/* styles.css */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    background-image: url('bg3.jpg'); 
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+.order-item {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px 0;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.order-item p {
+    margin: 5px 0;
+}
+
+/* Optional: Add responsive styles for better display on smaller screens */
+@media screen and (max-width: 600px) {
+    .order-item {
+        padding: 8px;
+    }
+}
